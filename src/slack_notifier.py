@@ -25,7 +25,7 @@ class SlackNotifier:
         pct_1y = price.pct_change_1y if price.pct_change_1y != "-" else "N/A"
 
         message = (
-            f"{trend} *{price.fund_name}*\n"
+            f"<@U0ABQH0L71Q> {trend} *{price.fund_name}*\n"
             f":calendar: {price.date.strftime('%Y/%m/%d')}\n"
             f":moneybag: 基準価額: *{price.nav:,}円*\n"
             f"前日比: *{sign}{price.daily_change:,}円* ({sign}{price.daily_change_pct}%)\n"
