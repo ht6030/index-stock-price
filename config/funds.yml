@@ -1,0 +1,13 @@
+funds:
+  - name: "eMAXIS Slim 新興国株式インデックス"
+    short_name: "新興国株式"
+    association_fund_cd: "0331C177"
+
+  # 追加例:
+  # - name: "eMAXIS Slim 全世界株式 (オール・カントリー)"
+  #   short_name: "全世界株式"
+  #   association_fund_cd: "0331418A"
+  #
+  # - name: "eMAXIS Slim 米国株式 (S&P500)"
+  #   short_name: "米国株式(S&P500)"
+  #   association_fund_cd: "03311187"
