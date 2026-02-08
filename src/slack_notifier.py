@@ -44,6 +44,10 @@ class SlackNotifier:
             raise
 
     def _upload_charts(self, fund_name: str, chart_paths: list[str]) -> None:
+        if not chart_paths:
+            # チャートなし（テキスト通知のみモード）
+            return
+
         for path, label in zip(chart_paths, PERIOD_LABELS):
             try:
                 self.client.files_upload_v2(
