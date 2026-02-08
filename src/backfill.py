@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fund_data import fetch_by_date, load_history, save_history
 
-BACKFILL_DAYS = 400
+BACKFILL_DAYS = 14  # 1週間チャート用に最小限の期間
 REQUEST_INTERVAL = 0.5
 
 

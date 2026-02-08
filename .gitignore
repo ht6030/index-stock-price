@@ -6,3 +6,4 @@ __pycache__/
 *.png
 .venv/
 plans/
+data/*_history.json

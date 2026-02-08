@@ -4,7 +4,7 @@ from slack_sdk.errors import SlackApiError
 from fund_data import FundPrice
 
 
-PERIOD_LABELS = ["1週間チャート", "1ヶ月チャート", "1年チャート"]
+PERIOD_LABELS = ["1週間チャート"]
 
 
 class SlackNotifier:
@@ -12,12 +12,12 @@ class SlackNotifier:
         self.client = WebClient(token=bot_token)
         self.channel_id = channel_id
 
-    def notify(self, price: FundPrice, chart_paths: list[str]) -> None:
+    def notify(self, price: FundPrice, chart_paths: list[str], fund_url: str) -> None:
         """基準価額テキストとチャート画像をSlackに投稿する。"""
-        self._post_message(price)
+        self._post_message(price, fund_url)
         self._upload_charts(price.fund_name, chart_paths)
 
-    def _post_message(self, price: FundPrice) -> None:
+    def _post_message(self, price: FundPrice, fund_url: str) -> None:
         sign = "+" if price.daily_change >= 0 else ""
         trend = ":chart_with_upwards_trend:" if price.daily_change >= 0 else ":chart_with_downwards_trend:"
 
@@ -29,7 +29,8 @@ class SlackNotifier:
             f":calendar: {price.date.strftime('%Y/%m/%d')}\n"
             f":moneybag: 基準価額: *{price.nav:,}円*\n"
             f"前日比: *{sign}{price.daily_change:,}円* ({sign}{price.daily_change_pct}%)\n"
-            f"1ヶ月: {pct_1m}% | 1年: {pct_1y}%"
+            f"1ヶ月: {pct_1m}% | 1年: {pct_1y}%\n"
+            f":link: <{fund_url}|詳細・長期チャートを見る>"
         )
 
         try:

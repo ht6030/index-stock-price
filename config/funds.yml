@@ -2,6 +2,7 @@ funds:
   - name: "eMAXIS Slim 新興国株式インデックス"
     short_name: "新興国株式"
     association_fund_cd: "0331C177"
+    fund_url: "https://emaxis.am.mufg.jp/fund/252878.html"
 
   # 追加例:
   # - name: "eMAXIS Slim 全世界株式 (オール・カントリー)"

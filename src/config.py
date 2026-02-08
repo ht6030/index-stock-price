@@ -10,6 +10,7 @@ class FundConfig:
     name: str
     short_name: str
     association_fund_cd: str
+    fund_url: str
 
 
 @dataclass

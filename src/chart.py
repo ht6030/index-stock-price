@@ -43,10 +43,9 @@ def generate_charts(
 
     latest_date = points[-1][0]
 
+    # 1週間チャートのみ生成（データ蓄積を最小限にするため）
     periods = [
         ("1week", "1週間", timedelta(days=7)),
-        ("1month", "1ヶ月", timedelta(days=31)),
-        ("1year", "1年", timedelta(days=366)),
     ]
 
     chart_paths = []

@@ -37,7 +37,7 @@ def main() -> None:
             print(f"  Generated {len(chart_paths)} charts")
 
             # Slack通知
-            notifier.notify(price, chart_paths)
+            notifier.notify(price, chart_paths, fund.fund_url)
             print(f"  Slack notification sent")
 
         except Exception as e:
