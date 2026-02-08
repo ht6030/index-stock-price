@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -8,6 +9,13 @@ from pathlib import Path
 import requests
 
 API_BASE = "https://developer.am.mufg.jp"
+
+# ブラウザのUser-Agentを設定してbot検出を回避
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+}
 
 
 @dataclass
@@ -26,15 +34,26 @@ def _extract_datasets(data: dict) -> list[dict]:
     return data.get("datasets", [])
 
 
-def fetch_latest(association_fund_cd: str) -> dict:
-    """MUFG APIから最新ファンド情報を取得する。"""
+def fetch_latest(association_fund_cd: str, max_retries: int = 3) -> dict:
+    """MUFG APIから最新ファンド情報を取得する。リトライ機能付き。"""
     url = f"{API_BASE}/fund_information_latest/association_fund_cd/{association_fund_cd}"
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
-    items = _extract_datasets(resp.json())
-    if not items:
-        raise ValueError(f"No data returned for fund {association_fund_cd}")
-    return items[0]
+
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=30)
+            resp.raise_for_status()
+            items = _extract_datasets(resp.json())
+            if not items:
+                raise ValueError(f"No data returned for fund {association_fund_cd}")
+            return items[0]
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403 and attempt < max_retries - 1:
+                # 403エラーの場合、指数バックオフでリトライ
+                wait_time = (attempt + 1) * 5
+                print(f"  403 error, retrying in {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+                continue
+            raise
 
 
 def fetch_by_date(association_fund_cd: str, base_date: str) -> dict | None:
@@ -44,7 +63,7 @@ def fetch_by_date(association_fund_cd: str, base_date: str) -> dict | None:
         f"/association_fund_cd/{association_fund_cd}"
         f"/base_date/{base_date}"
     )
-    resp = requests.get(url, timeout=30)
+    resp = requests.get(url, headers=HEADERS, timeout=30)
     if resp.status_code in (400, 404):
         return None
     resp.raise_for_status()
