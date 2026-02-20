@@ -1,14 +1,22 @@
 # index-stock-price
 
-投資信託の基準価額を毎朝自動取得し、チャート付きでSlackに通知するシステム。
+投資信託の基準価額を毎日自動取得し、Slackに通知するシステム。
+Cloudflare Workers + Cron Triggers で平日21時 (JST) に定期実行。
 
 ## 機能
 
 - 三菱UFJアセットマネジメント公式APIから基準価額を自動取得
 - 前日比 (円・%) を表示
-- 1週間・1ヶ月・1年のチャートを画像で送信
-- GitHub Actionsで毎朝7時 (JST) に自動実行
-- `config/funds.yml` でウォッチ対象ファンドを簡単に追加可能
+- 1ヶ月・1年の騰落率を表示
+- Cloudflare Workers で平日21:00 JST に自動実行
+
+## アーキテクチャ
+
+```
+Cloudflare Workers (TypeScript)
+  → MUFG API (基準価額取得)
+  → Slack API (通知送信)
+```
 
 ## セットアップ
 
@@ -19,7 +27,6 @@
 3. アプリ名 (例: `Fund Monitor`) とワークスペースを指定して作成
 4. 左メニュー「OAuth & Permissions」→「Bot Token Scopes」に以下を追加:
    - `chat:write`
-   - `files:write`
 5. ページ上部の「Install to Workspace」をクリック
 6. **Bot User OAuth Token** (`xoxb-...`) をコピー
 
@@ -29,37 +36,46 @@
 2. チャンネル名をクリック → 下部に表示される **チャンネルID** (`C0123456789`) をコピー
 3. チャンネル内で `/invite @アプリ名` を入力してBotを招待
 
-### 3. GitHubリポジトリの設定
+### 3. Cloudflare Workers のデプロイ
 
-1. このリポジトリをGitHubにプッシュ
-2. Settings → Secrets and variables → Actions で以下を追加:
+```bash
+cd worker
+npm install
 
-| Secret名 | 値 |
-|---|---|
-| `SLACK_BOT_TOKEN` | `xoxb-...` (上記でコピーしたBot Token) |
-| `SLACK_CHANNEL_ID` | `C0123456789` (チャンネルID) |
+# wrangler.toml の SLACK_CHANNEL_ID を設定済みであることを確認
+
+# Cloudflare にログイン
+npx wrangler login
+
+# Slack Bot Token をシークレットとして登録
+npx wrangler secret put SLACK_BOT_TOKEN
+
+# デプロイ
+npx wrangler deploy
+```
 
 ### 4. 動作確認
 
-GitHub Actions → 「Daily Fund Price Notification」 → 「Run workflow」で手動実行。
+```bash
+curl https://index-stock-price.<your-subdomain>.workers.dev/trigger
+```
+
 Slackチャンネルに通知が届くことを確認。
 
 ## ファンドの追加
 
-`config/funds.yml` にエントリを追加:
+`worker/src/index.ts` の `FUNDS` 配列にエントリを追加:
 
-```yaml
-funds:
-  - name: "eMAXIS Slim 新興国株式インデックス"
-    short_name: "新興国株式"
-    association_fund_cd: "0331C177"
-
-  - name: "eMAXIS Slim 全世界株式 (オール・カントリー)"
-    short_name: "全世界株式"
-    association_fund_cd: "0331418A"
+```typescript
+{
+  name: "eMAXIS Slim 全世界株式 (オール・カントリー)",
+  shortName: "全世界株式",
+  associationFundCd: "0331418A",
+  fundUrl: "https://emaxis.am.mufg.jp/fund/253425.html",
+},
 ```
 
-ファンドコード (`association_fund_cd`) は三菱UFJ AM APIの `/code_list` エンドポイントで検索できます:
+ファンドコード (`associationFundCd`) は三菱UFJ AM APIの `/code_list` エンドポイントで検索できます:
 
 ```
 https://developer.am.mufg.jp/code_list
@@ -67,13 +83,14 @@ https://developer.am.mufg.jp/code_list
 
 > 注意: このAPIは三菱UFJアセットマネジメントが運用するファンドのみ対応しています。
 
-## ローカル実行
+## ローカル開発
 
 ```bash
-pip install -r requirements.txt
-export SLACK_BOT_TOKEN="xoxb-..."
-export SLACK_CHANNEL_ID="C0123456789"
-cd src && python main.py
+cd worker
+npm install
+npx wrangler dev
+
+# ブラウザで http://localhost:8787/trigger にアクセスして手動実行
 ```
 
 ## データソース
