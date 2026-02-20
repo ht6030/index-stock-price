@@ -1,0 +1,14 @@
+name = "index-stock-price"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# 平日 21:00 JST (= UTC 12:00) に実行
+[triggers]
+crons = ["0 12 * * 1-5"]
+
+# 環境変数（公開値）
+[vars]
+SLACK_CHANNEL_ID = "C0ADZQ2PGQ1"
+
+# シークレット（以下のコマンドで設定）:
+#   npx wrangler secret put SLACK_BOT_TOKEN
